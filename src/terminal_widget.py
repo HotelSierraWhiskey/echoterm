@@ -6,7 +6,7 @@ from serial_manager import SerialManager
 class TerminalEdit(QPlainTextEdit):
 	"""
 	This is the text-related component of the terminal interface.
-	It's responsible for processing keypresses and rendering characters
+	It's responsible for processing keypresses and characters
 	received from the serial connection.
 	"""
 
@@ -14,7 +14,7 @@ class TerminalEdit(QPlainTextEdit):
 
 	def __init__(self, parent=None):
 		super().__init__(parent=parent)
-		self.setFont(QFont("Courier", 12))
+		self.setFont(QFont("Courier", 16))
 		self.setStyleSheet("background-color: black; color: #00FF00;")
 		self.setCursorWidth(10)
 		self.setFont("Courier")
@@ -39,18 +39,17 @@ class TerminalWidget(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent=parent)
 
+		self.serial_manager = SerialManager()
+		self.serial_manager.rx.connect(lambda char: self.terminal_edit.write_char(char))
+
 		self.menu = Menu()
-		self.menu.connect_dialog.serial_settings.connect(lambda settings: self.serial_manager.apply_settings(settings))
+		self.menu.connection_dialog.serial_settings_signal.connect(lambda settings: self.serial_manager.start_session(settings))
+		self.menu.connection_dialog.disconnect_signal.connect(self.serial_manager.stop_thread)
 
 		self.terminal_edit = TerminalEdit()
-		self.terminal_edit.tx.connect(lambda byte: self.serial_manager.conn.ser.write(byte))
-
-		self.serial_manager = SerialManager()
-		self.serial_manager.rx.connect(lambda byte: self.terminal_edit.write_char(byte))
+		self.terminal_edit.tx.connect(lambda char: self.serial_manager.write(char))
 
 		self.clear_button = QPushButton(text="Clear", clicked=self.terminal_edit.clear)
-		self.connect_button = QPushButton(text="Connect", clicked=self.serial_manager.start_thread)
-		self.disconnect_button = QPushButton(text="Disconnect", clicked=self.serial_manager.stop_thread)
 
 		with CVBoxLayout(self) as layout:
 			with layout.hbox() as layout:
@@ -59,5 +58,3 @@ class TerminalWidget(QWidget):
 				layout.add(self.terminal_edit)
 			with layout.hbox() as layout:
 				layout.add(self.clear_button)
-				layout.add(self.connect_button)
-				layout.add(self.disconnect_button)
