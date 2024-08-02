@@ -1,0 +1,10 @@
+appdirs==1.4.4
+packaging==24.1
+pyserial==3.5
+PySide6==6.7.2
+PySide6_Addons==6.7.2
+PySide6_Essentials==6.7.2
+QtAwesome==1.3.1
+QtPy==2.4.1
+qtstrap==0.6.4
+shiboken6==6.7.2
