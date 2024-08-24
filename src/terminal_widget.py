@@ -14,25 +14,31 @@ class TerminalEdit(QPlainTextEdit):
 
 	def __init__(self, parent=None):
 		super().__init__(parent=parent)
-		self.setFont(QFont("Courier", 16))
+		self.setFont(QFont("Courier", pointSize=12))
 		self.setStyleSheet("background-color: black; color: #00FF00;")
 		self.setCursorWidth(10)
-		self.setFont("Courier")
 
 	def keyPressEvent(self, event):
-		if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+		key = event.key()
+		if key == Qt.Key_Return or key == Qt.Key_Enter:
 			self.tx.emit(b"\n")
-		elif event.key() == Qt.Key_Escape:
+		elif key == Qt.Key_Escape:
 			self.tx.emit(b"\x1b")
+		elif key == Qt.Key_Backspace:
+			self.tx.emit(b"\x08")
 		else:
 			byte = bytes(event.text().encode('utf-8'))
 			self.tx.emit(byte)
 
 	def write_char(self, char):
 		cursor = self.textCursor()
-		cursor.movePosition(QTextCursor.End)
-		cursor.insertText(char)
-		self.setTextCursor(cursor)
+		if bytes(char, "utf-8") == b"\x08":
+			cursor.movePosition(QTextCursor.PreviousCharacter)
+			cursor.deleteChar()
+		else:
+			cursor.movePosition(QTextCursor.End)
+			cursor.insertText(char)
+			self.setTextCursor(cursor)
 
 
 class TerminalWidget(QWidget):
@@ -42,19 +48,16 @@ class TerminalWidget(QWidget):
 		self.serial_manager = SerialManager()
 		self.serial_manager.rx.connect(lambda char: self.terminal_edit.write_char(char))
 
-		self.menu = Menu()
-		self.menu.connection_dialog.serial_settings_signal.connect(lambda settings: self.serial_manager.start_session(settings))
-		self.menu.connection_dialog.disconnect_signal.connect(self.serial_manager.stop_thread)
-
 		self.terminal_edit = TerminalEdit()
 		self.terminal_edit.tx.connect(lambda char: self.serial_manager.write(char))
 
-		self.clear_button = QPushButton(text="Clear", clicked=self.terminal_edit.clear)
+		self.menu = Menu(parent=self)
+		self.menu.connection_dialog.serial_settings_signal.connect(lambda settings: self.serial_manager.start_session(settings))
+		self.menu.connection_dialog.disconnect_signal.connect(self.serial_manager.stop_thread)
+		self.menu.clear_action.triggered.connect(self.terminal_edit.clear)
 
 		with CVBoxLayout(self) as layout:
-			with layout.hbox() as layout:
+			with layout.hbox(align="right") as layout:
 				layout.add(self.menu)
 			with layout.hbox() as layout:
 				layout.add(self.terminal_edit)
-			with layout.hbox() as layout:
-				layout.add(self.clear_button)

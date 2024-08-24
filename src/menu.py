@@ -18,9 +18,12 @@ class ConnectionDialog(QDialog):
 		self.baudrate.setCurrentIndex(self.bauds.index("115200"))
 
 		self.port = QLineEdit()
+		self.port.setText("/dev/ttyUSB0") # temporary
 		self.connect_button = QPushButton("Connect", clicked=self.handle_connect)
 		self.disconnect_button = QPushButton("Disconnect", clicked=self.handle_disconnect)
 		self.cancel_button = QPushButton("Cancel", clicked=self.handle_cancel)
+
+		self.center_on_parent()
 
 		with CVBoxLayout(self, align="left") as layout:
 			with layout.hbox() as layout:
@@ -34,6 +37,22 @@ class ConnectionDialog(QDialog):
 				layout.add(self.disconnect_button)
 				layout.add(self.cancel_button)
 	
+	def center_on_parent(self):
+		pass
+		# parent = self.parent().parent()
+		# if parent:
+		# 	parent_geometry = parent.geometry()
+		# 	dialog_geometry = self.geometry()
+
+		# 	x = QApplication.primaryScreen().availableGeometry().x() // 2
+		# 	y = QApplication.primaryScreen().availableGeometry().y() // 2
+
+		# 	self.move(x, y)
+		# 	print(f"Dialog centered on parent at: {x}, {y}")
+		# 	print(f"Available screen geometry: {QApplication.primaryScreen().availableGeometry()}")
+
+		
+	
 	def handle_connect(self):
 		port = self.port.text()
 		baudrate = int(self.baudrate.currentText())
@@ -43,6 +62,7 @@ class ConnectionDialog(QDialog):
 			self.accept()
 
 	def handle_disconnect(self):
+		self.port.clear()
 		self.disconnect_signal.emit()
 		self.accept()
 
@@ -56,7 +76,7 @@ class Menu(QMenuBar):
 	def __init__(self, parent=None):
 		super().__init__(parent=parent)
 
-		self.connection_dialog = ConnectionDialog()
+		self.connection_dialog = ConnectionDialog(parent=self)
 		
 		file_menu = self.addMenu("File")
 
@@ -64,7 +84,12 @@ class Menu(QMenuBar):
 		connect_action.triggered.connect(lambda: self.connection_dialog.exec_())
 		file_menu.addAction(connect_action)
 
+		self.clear_action = QAction("Clear", self)
+		file_menu.addAction(self.clear_action)
+
 		quit_action = QAction("Quit", self)
+		quit_action.triggered.connect(QApplication.instance().quit)
+		file_menu.addSeparator()
 		file_menu.addAction(quit_action)
 
 		self.addMenu("Edit")
