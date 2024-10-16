@@ -1,5 +1,6 @@
 from qtstrap import *
 from terminal_widget import TerminalWidget
+from code_editor_widget import CodeEditor
 
 
 class MainWindow(BaseMainWindow):
@@ -11,6 +12,10 @@ class MainWindow(BaseMainWindow):
         self.setCentralWidget(widget)
 
         self.term = TerminalWidget()
+        self.code_editor = CodeEditor()
 
-        with CVBoxLayout(widget) as layout:
-            layout.add(self.term)
+        with CHBoxLayout(widget) as layout:
+            with layout.hbox(align="right") as layout:
+                layout.add(self.code_editor)
+            with layout.hbox(align="right") as layout:
+                layout.add(self.term)
