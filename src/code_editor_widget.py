@@ -1,18 +1,23 @@
 from qtstrap import *
-from event_listener import wait_for, WorkerSignals
+from event_listener import wait_for
 import io
 import traceback
 from threading import Thread
 
 
-class Worker(QThread):
+class Worker(QObject):
 
 	finished = Signal()
+	output_ready = Signal(str)
+	error_occurred = Signal(str)
 
 	def __init__(self, script):
 		super().__init__()
+		self.script = script
 
 	def run(self):
+		print("test1")
+
 		output_buffer = io.StringIO()
 		sys.stdout = output_buffer
 		sys.stderr = output_buffer
@@ -20,10 +25,10 @@ class Worker(QThread):
 		try:
 			exec(self.script, globals())
 			output = output_buffer.getvalue()
-			# self.signals.output_ready.emit(output)
+			self.output_ready.emit(output)
 		except Exception:
 			error_message = traceback.format_exc()
-			# self.signals.error_occurred.emit(error_message)
+			self.error_occurred.emit(error_message)
 		finally:
 			sys.stdout = sys.__stdout__
 			sys.stderr = sys.__stderr__
@@ -50,7 +55,7 @@ class CodeEditor(QWidget):
 		self.output_display.setReadOnly(True)
 		self.output_display.setFont(monospace_font)
 
-		self.worker_signals = WorkerSignals()
+		# self.worker_signals = WorkerSignals()
 
 		globals()["wait_for"] = wait_for
 
@@ -64,6 +69,16 @@ class CodeEditor(QWidget):
 
 	def run(self):
 		script = self.code_editor.toPlainText()
-		worker = Worker(script, self.worker_signals)
-		# worker.finished.connect(worker.deleteLater)
-		worker.start()
+		self.thread = QThread()
+		self.worker = Worker(script=script)
+
+		self.worker.moveToThread(self.thread)
+
+		self.worker.output_ready.connect(lambda x: self.output_display.setPlainText(x))
+
+		self.thread.started.connect(self.worker.run)
+		self.worker.finished.connect(self.thread.quit)
+		self.worker.finished.connect(self.worker.deleteLater)
+		self.thread.finished.connect(self.thread.deleteLater)
+
+		self.thread.start()

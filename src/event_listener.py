@@ -18,11 +18,6 @@ class TerminalData:
 terminal_data = TerminalData()
 
 
-class WorkerSignals(QObject):
-	output_ready = Signal(str)
-	error_occurred = Signal(str)
-
-
 def wait_for(target: str = None, exclude: list = [], on_event=None, timeout=5.0):
 	start_time = time.time()
 	found_event = Event()
@@ -34,10 +29,12 @@ def wait_for(target: str = None, exclude: list = [], on_event=None, timeout=5.0)
 				if all(ex not in terminal_data.data for ex in exclude):
 					if on_event:
 						on_event(target)
+					print("yes findy")
 					found_event.set()
 					break
 			time.sleep(0.1)
 		if not found_event.is_set():
+			print("no findy")
 			if on_event:
 				on_event(None)
 
