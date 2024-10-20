@@ -13,6 +13,7 @@ class MainWindow(BaseMainWindow):
 
         self.term = TerminalWidget()
         self.code_editor = CodeEditor()
+        self.code_editor.serial_passthrough.connect(lambda data: self.term.serial_manager.write_string(data))
 
         with CHBoxLayout(widget) as layout:
             with layout.hbox(align="right") as layout:

@@ -2,6 +2,18 @@ from qtstrap import *
 import serial
 
 
+"""
+Global serial settings
+
+Global because scripts that runs in the application's code editor
+use these settings as well.
+"""
+SERIAL_SETTINGS = {
+	"port": None,
+	"baudrate": None
+}
+
+
 class SerialConnection(QThread):
 	"""
 	The main serial interface.
@@ -61,17 +73,25 @@ class SerialManager(QWidget):
 			self.conn.ser.close()
 			self.conn.wait()
 
-	def write(self, char):
+	def write(self, char: str):
 		if self.conn.isRunning():
 			self.conn.ser.write(char)
 
-	def start_session(self, settings):
+	def write_string(self, string: str):
+		if self.conn.isRunning():
+			string = bytes(string + "\n", "utf-8")
+			self.conn.ser.write(string)
+
+
+
+
+	def start_session(self):
 		"""
 		Retrieves and applies settings.
 		Instantiates a fresh `SerialConnection`
 		"""
-		port = settings["port"]
-		baudrate = settings["baudrate"]
+		port = SERIAL_SETTINGS["port"]
+		baudrate = SERIAL_SETTINGS["baudrate"]
 		ser = serial.Serial(
 			port=port,
 			baudrate=baudrate,

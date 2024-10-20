@@ -1,8 +1,7 @@
 from qtstrap import *
-from event_listener import wait_for
+from event_listener import wait_for, send
 import io
 import traceback
-from threading import Thread
 
 
 class Worker(QObject):
@@ -16,8 +15,6 @@ class Worker(QObject):
 		self.script = script
 
 	def run(self):
-		print("test1")
-
 		output_buffer = io.StringIO()
 		sys.stdout = output_buffer
 		sys.stderr = output_buffer
@@ -39,6 +36,9 @@ class Worker(QObject):
 
 
 class CodeEditor(QWidget):
+
+	serial_passthrough = Signal(str)
+
 	def __init__(self):
 		super().__init__()
 
@@ -58,6 +58,7 @@ class CodeEditor(QWidget):
 		# self.worker_signals = WorkerSignals()
 
 		globals()["wait_for"] = wait_for
+		globals()["send"] = lambda data: self.serial_passthrough.emit(data)
 
 		with CVBoxLayout(self) as layout:
 			with layout.hbox(align="right") as layout:

@@ -1,7 +1,7 @@
 from qtstrap import *
 from menu import Menu
 from serial_manager import SerialManager
-from event_listener import terminal_data, EventListener
+from event_listener import terminal_data
 
 
 class TerminalEdit(QPlainTextEdit):
@@ -53,7 +53,7 @@ class TerminalWidget(QWidget):
 		self.terminal_edit.tx.connect(lambda char: self.serial_manager.write(char))
 
 		self.menu = Menu(parent=self)
-		self.menu.connection_dialog.serial_settings_signal.connect(lambda settings: self.serial_manager.start_session(settings))
+		self.menu.connection_dialog.serial_settings_signal.connect(lambda: self.serial_manager.start_session())
 		self.menu.connection_dialog.disconnect_signal.connect(self.serial_manager.stop_thread)
 		self.menu.clear_action.triggered.connect(self.terminal_edit.clear)
 

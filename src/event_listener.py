@@ -1,7 +1,7 @@
-from typing import List
-from PySide6.QtCore import Signal, QObject
 import time
-from threading import Thread, Event
+import serial
+from serial_manager import SERIAL_SETTINGS
+
 
 
 class TerminalData:
@@ -18,43 +18,43 @@ class TerminalData:
 terminal_data = TerminalData()
 
 
-def wait_for(target: str = None, exclude: list = [], on_event=None, timeout=5.0):
+class Reponse:
+	def __init__(self, sucessful = False, data = None):
+		self._successful = sucessful
+		self._data = data
+	
+	def successful(self):
+		return self._successful
+	
+	def data(self):
+		return self._data
+
+
+def wait_for(target: str = None, exclude: list = [], timeout=20.0):
 	start_time = time.time()
-	found_event = Event()
+	found = False
 
-	def runner():
-		while time.time() - start_time < timeout:
-			# Check if the target is in the terminal data and not in the exclude list
-			if target and target in terminal_data.data:
-				if all(ex not in terminal_data.data for ex in exclude):
-					if on_event:
-						on_event(target)
-					print("yes findy")
-					found_event.set()
-					break
-			time.sleep(0.1)
-		if not found_event.is_set():
-			print("no findy")
-			if on_event:
-				on_event(None)
+	while time.time() - start_time < timeout:
+		if target and target in terminal_data.data:
+			if all(ex not in terminal_data.data for ex in exclude):
+				found = True
+				break
+		time.sleep(0.1)
 
-	Thread(target=runner).start()
-	return found_event
+	data = terminal_data.data
+	terminal_data.clear()
+	return Reponse(found, data)
 
 
-class EventListener:
-	def __init__(self, target: str = None, exclude: List[str] = [], on_event=None, timeout=5.0):
-		self.target = target
-		self.exclude = exclude
-		self.on_event = on_event
-		self.timeout = timeout
-		self.source = ""
-
-	def read_char(self, c):
-		self.source += c
-		if self.target in self.source and self.exclude not in self.source:
-			print(f"Found: {self.target}")
-			self.source = ""
-
-	def beep(self):
-		print("BEEP!")
+def send(data: str):
+	# port = SERIAL_SETTINGS["port"]
+	# baudrate = SERIAL_SETTINGS["baudrate"]
+	# ser = serial.Serial(
+	# 	port=port,
+	# 	baudrate=baudrate,
+	# 	parity=serial.PARITY_NONE,
+	# 	stopbits=serial.STOPBITS_ONE,
+	# 	bytesize=serial.EIGHTBITS
+	# )
+	# ser.write(data)
+	print(data)
